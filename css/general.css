@@ -1,0 +1,26 @@
+body {background:#022744;
+	  color:#f1e51d;
+	  font-size:14px;
+	  padding:0;
+	  margin:0;
+	  letter-spacing:0.2em;
+	  overflow:hidden;
+	  font-family:sans-serif;
+	  text-align:center;
+}
+
+#oldie { background-color: #022744 !important }
+
+a:link {color: #92243d;
+		text-decoration:none;
+		}
+		
+a:visited {color: #92243d;
+		   text-decoration:none;
+		   }
+		   
+a:active {color: #92243d;
+          text-decoration:none;
+		  }
+		  
+

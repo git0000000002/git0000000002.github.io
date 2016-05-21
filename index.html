@@ -1,0 +1,370 @@
+<html> 
+<head> 
+<title>two moons</title> 
+<meta http-equiv="content-type" content="text/html; charset=utf-8"> 
+
+</head>
+<body onLoad="init();">
+
+	
+	
+
+<link rel="stylesheet" type="text/css" href="css/general.css">
+ 
+<script type="text/javascript" src="mrdoob-three.js-3433b49/build/Three.js"></script>    
+<script type="text/javascript" src="js/RequestAnimationFrame.js"></script>
+<script type="text/javascript" src="js/Stats.js"></script>
+<script type="text/javascript" src="js/Detector.js"></script>
+
+<script type="text/javascript" src="general/THREEx.WindowResize.js"></script>
+
+<!-- load the font files -->
+
+
+<script type="text/javascript" src="fonts/helvetiker_bold.typeface.js"></script>
+<script type="text/javascript" src="fonts/helvetiker_regular.typeface.js"></script>
+
+<script type="text/javascript"> 
+
+
+if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+
+
+var camera, scene, projector, material, mesh, shader,light, zmesh, geometry, container, renderer, info, mouse = { x: 0, y: 0 }, loader;
+var color, depth, stencil;
+var meshes = [];
+
+
+// COLLIDE
+var totalFaces = 0, totalColliders = 0;
+
+
+
+function init() {
+
+	container = document.createElement( 'div' );
+	document.body.appendChild( container );
+	
+	info = document.getElementById("info");
+	
+	scene = new THREE.Scene();
+	
+	
+	// CAMERA
+	
+	camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 30000 );
+
+				controls = new THREE.RollControls( camera );
+
+				controls.movementSpeed = 50;
+				controls.lookSpeed = 0.4;
+				controls.constrainVertical = [ -0.5, 0.5 ];
+	camera.position.set( 0, 10, 700);
+				
+	scene.add( camera );
+	
+	
+	// COLOR
+	var groundColor = 0x000302;
+	
+	//LOCATION
+	
+	var tx0 = 1030, tz0 = -1030;
+	var tx1 = -530, tz1 = -530;
+	var tx2 = -1030, tz2 = 0;
+	var tx3 = 530, tz3 = 530;
+	var tx4 = 0, tz4 = 1030;
+	
+				
+	// FOG
+	scene.fog = new THREE.FogExp2( 0x022744, 0.001);
+	
+
+	// LIGHTS
+	
+	var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.7);
+	directionalLight.position.set( 0, 2000, -2000);
+	directionalLight.position.normalize();
+	scene.add( directionalLight );
+	
+
+	var ambientLight = new THREE.AmbientLight( 0x222222);
+	scene.add( ambientLight );
+		
+	
+	// PROJECTER
+	projector = new THREE.Projector();
+
+
+	// RENDERER
+	renderer = new THREE.WebGLRenderer();
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.sortObjects = false;
+	renderer.autoClear = false;
+			
+	renderer.domElement.style.position = "relative";
+	container.appendChild( renderer.domElement );
+	
+	
+	// GROUND 
+	var plane = new THREE.PlaneGeometry( 10000, 10000 );
+	ground = new THREE.Mesh( plane, new THREE.MeshBasicMaterial( { color: groundColor } ) );
+    ground.rotation.set(-Math.PI/2,0,0);
+	ground.position.y = 0;
+	ground.position.z = 0;
+	ground.receiveShadow = true;
+	scene.add( ground );
+		
+		
+	// MATERIALS
+	m = { tree_0: [new THREE.MeshBasicMaterial( { color: 0x92243d})],
+		  tree_1: [new THREE.MeshBasicMaterial( { color: 0x65ac6a})],
+		  tree_2: [new THREE.MeshBasicMaterial( { color: 0xf1e51d})],
+		  tree_3: [new THREE.MeshBasicMaterial( { color: 0x1c4972})],
+		  tree_4: [new THREE.MeshBasicMaterial( { color: 0xedb122})],
+		  tree_x: [new THREE.MeshBasicMaterial( { color: 0x000000})],
+		  moon: [new THREE.MeshLambertMaterial( { map: THREE.ImageUtils.loadTexture( "textures/moon.jpg" )})]
+				     		  
+	}
+	
+	selected = [ new THREE.MeshBasicMaterial( { color: 0xff0000}) ];
+			
+				
+	// MESH geometry, x, y, z, ry, rz, scale, collide, id, material
+		var loader = new THREE.JSONLoader(),
+		
+		// MOON
+		planet = new THREE.SphereGeometry( 60, 100, 50 );
+		moon_mesh_1 = createScene( planet, 400, 700, 0, 0, 0.4, 1, 0, 13, "moon", m);
+
+	
+		moon_mesh_2 = createScene( planet, 200, 900, -500, 0, 2, 0.8, 0, 14, "moon", m);								  
+		// TREE
+		tree_1 = function( geometry ) { createScene( geometry, tx0, 0, tz0, Math.random()*6.3, 0, 10, 1, 5, "tree_0", m),
+										createScene( geometry, tx1, 0, tz1, Math.random()*6.3, 0, 10, 1, 5, "tree_1", m),
+										createScene( geometry, tx2, 0, tz2, Math.random()*6.3, 0, 10, 1, 5, "tree_2", m),
+										createScene( geometry, tx3, 0, tz3, Math.random()*6.3, 0, 10, 1, 5, "tree_3", m),
+										createScene( geometry, tx4, 0, tz4, Math.random()*6.3, 0, 10, 1, 5, "tree_4", m);
+										
+										for ( i = 0; i < 100; ++i ) { 
+										
+										createScene( geometry, Math.round(Math.random()*40)*75 , -Math.random()*5, Math.round(Math.random()*40)*75, Math.random()*6.3, 0, 10, 0, 6, "tree_x", m),
+										createScene( geometry, -Math.round(Math.random()*40)*75 , -Math.random()*5, -Math.round(Math.random()*40)*75, Math.random()*6.3, 0, 10, 0, 6, "tree_x", m),
+										createScene( geometry, Math.round(Math.random()*40)*75 , -Math.random()*5, -Math.round(Math.random()*40)*75, Math.random()*6.3, 0, 10, 0, 6, "tree_x", m),
+										createScene( geometry, -Math.round(Math.random()*40)*75 , -Math.random()*5, Math.round(Math.random()*40)*75, Math.random()*6.3, 0, 10, 0, 6, "tree_x", m);
+										
+									
+										};
+										
+						
+										
+										};
+										
+										
+		loader.load( { model: "obj/tree_1.js", callback: tree_1 } );
+			
+		tree_2 = function( geometry ) { for ( i = 0; i < 100; ++i ) { 
+										
+										createScene( geometry, Math.round(Math.random()*50)*50 , -Math.random()*5, Math.round(Math.random()*50)*50, Math.random()*6.3, 0, 10, 0, 6, "tree_x", m),
+										createScene( geometry, -Math.round(Math.random()*50)*50 , -Math.random()*5, -Math.round(Math.random()*50)*50, Math.random()*6.3, 0, 10, 0, 6, "tree_x", m),
+										createScene( geometry, Math.round(Math.random()*50)*50 , -Math.random()*5, -Math.round(Math.random()*50)*50, Math.random()*6.3, 0, 10, 0, 6, "tree_x", m),
+										createScene( geometry, -Math.round(Math.random()*50)*50 , -Math.random()*5, Math.round(Math.random()*50)*50, Math.random()*6.3, 0, 10, 0, 6, "tree_x", m);
+										
+									
+										};
+										
+										
+										
+										};
+										
+								
+		loader.load( { model: "obj/tree_2.js", callback: tree_2 } );									
+										
+	
+	
+	    // STARS
+		r = 9000;
+
+		points = new THREE.Geometry();
+		
+		stars_m = [ new THREE.ParticleBasicMaterial( { color: 0x446075, fog:false, size: 1, sizeAttenuation: false } ),
+			        new THREE.ParticleBasicMaterial( { color: 0x5e7688, fog:false, size: 1.5, sizeAttenuation: false } ),
+			        new THREE.ParticleBasicMaterial( { color: 0x5e7688, fog:false, size: 0.5, sizeAttenuation: false } ),
+	              ];
+
+		for ( i = 0; i < 500; ++i ) {
+				vector1 = new THREE.Vector3( Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1 );
+				vector1.normalize();
+				vector1.multiplyScalar( r );
+				
+				points.vertices.push( new THREE.Vertex( vector1 ) );
+				
+				}
+	
+				
+		for ( i = 10; i < 30; i++ ) {
+			stars = new THREE.ParticleSystem( points, stars_m[ i % 3 ]);
+			stars.rotation.y = Math.random() * Math.PI;
+			stars.matrixAutoUpdate = false;
+			stars.updateMatrix();
+			scene.add( stars );
+		}
+	
+	// CLOUD
+	
+	var cloudImage = THREE.ImageUtils.loadTexture( "textures/cloud.png" );
+
+				cloud = new THREE.Sprite( { map: cloudImage, useScreenCoordinates: false } );
+				cloud.position.set( 0, 400, -500 );
+				cloud.scale.set( 8.5, 1.5, 1.5 );
+				cloud.opacity = 0.01;
+				scene.add( cloud );
+
+	
+	
+	// EVENT
+	container.addEventListener( "click", onClick, false );
+	container.onmousemove = onDocumentMouseMove;
+	
+	
+	animate();
+}
+
+
+//MATERIAL
+
+	function createScene( geometry, x, y, z, ry, rz, scale, collide, id, name, mat) {
+								
+				zmesh = new THREE.Mesh( geometry,mat[name]);
+							
+				geometry.__dirtyColors = true;
+						
+				zmesh.position.set( x, y, z );
+				zmesh.rotation.y = ry;
+				zmesh.rotation.z = rz;
+				zmesh.scale.x = zmesh.scale.y = zmesh.scale.z = scale;
+				zmesh.id = id;
+				
+				zmesh.name = name;
+								
+				zmesh.overdraw = true;
+				zmesh.dynamic = true;
+				zmesh.doubleSided = true;
+				zmesh.castShadow = true;
+				zmesh.receiveShadow = true;
+				
+				zmesh.updateMatrix();
+				scene.add(zmesh);
+				
+				if (collide == 1){
+		
+					totalFaces += geometry.faces.length;
+					totalColliders++;
+	
+					var mc = THREE.CollisionUtils.MeshColliderWBox(zmesh);
+					THREE.Collisions.colliders.push( mc );
+					meshes.push( zmesh )
+					}else{}
+					
+}
+
+function onDocumentMouseMove( event ) {
+
+	event.preventDefault();	
+	mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+	mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+};
+
+
+function animate() {
+
+	requestAnimationFrame( animate );
+	
+	// COLLIDE
+	
+	if( meshes.length == 0 ) return;
+	
+	container.style.cursor = 'auto';
+	
+	
+	
+	for ( i = 0; i < meshes.length; i++ ) {
+		meshes[ i ].materials = m[meshes[ i ].name];
+		}
+	
+
+
+	
+	var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
+	projector.unprojectVector( vector, camera );
+
+	var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
+	var c = THREE.Collisions.rayCastNearest( ray );
+	
+		if( c ) { c.mesh.materials = selected;
+				  container.style.cursor = 'hand';
+				  
+				  } else {
+}
+
+	
+	if (camera.position.y < 2){	camera.position.y = 2; }
+		
+	renderer.clear( color, depth, stencil );
+
+	controls.update();
+	renderer.render( scene, camera );
+		
+};
+
+
+function onClick() {
+
+	if( meshes.length == 0 ) return;
+	
+	var i, l = meshes.length;
+	var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
+	projector.unprojectVector( vector, camera );
+
+	var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
+
+	var c = THREE.Collisions.rayCastNearest( ray );
+	
+	if( c ) {
+		
+		
+		if (c.mesh.name == "tree_0"){window.open('http://www.nytimes.com/2011/10/23/magazine/the-fierce-imagination-of-haruki-murakami.html','_blank')}
+			else if(c.mesh.name == "tree_1"){window.open('http://www.npr.org/2011/10/25/141460070/1q84-japans-orwellian-bestseller-comes-to-u-s','_blank')}
+			else if(c.mesh.name == "tree_2"){window.open('http://twitter.com/#!/search/1Q84','_blank')}
+			else if(c.mesh.name == "tree_3"){window.open('http://www.nytimes.com/2007/07/08/books/review/Murakami-t.html','_blank')}
+			else if(c.mesh.name == "tree_4"){window.open('http://www.guardian.co.uk/books/2011/oct/14/haruki-murakami-1q84?cat=books&type=article','_blank')}
+			} else {
+	}
+}
+
+	
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-26657902-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+
+
+
+</script>
+
+
+<body>
+
+
+</body> 
+
+</html> 
